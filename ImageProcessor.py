@@ -9,9 +9,9 @@ try:
     from BytesIO import BytesIO
 except ImportError:
     from io import BytesIO
-
+from validate_email import validate_email
 class ImageProcessor(object):
-    NEWIMAGESIZE = 300
+    NEWIMAGESIZE = 1200
     path = ""
     def __init__(self):
         self.image = 0
@@ -33,10 +33,10 @@ class ImageProcessor(object):
     def process_image(self, url):
         image = self._get_image(url)
         image.filter(ImageFilter.SHARPEN)
-        image = self._resize_image(image, 3)
+        image = self._resize_image(image, 12)
         image.filter(ImageFilter.GaussianBlur(2))
         image.filter(ImageFilter.SMOOTH)
-        image.filter(ImageFilter.Kernel((3,3), [1,1,1,1,0,-1,-1,-1,-1]));
+        image.filter(ImageFilter.Kernel((3,3), [1,1,1,0,0,0,-1,-1,-1]));
         s = pytesseract.image_to_string(image)
         return self.normalize(s)
 
@@ -63,35 +63,53 @@ class ImageProcessor(object):
         numbercount = 0
         alphacount = 0
         for c in s:
-            if self.isNumber(c):
-                numbercount += 1
-            elif self.isVowel(c):
-                alphacount += 1
-            elif not self.isVowel(c):
-                alphacount += 1
-                if c == 'l' and i<len(s)-1 and not self.isVowel(s[i-1]) and not self.isVowel(s[i+1]):
-                    s[i] = 'i'
+            if not self.isVowel(c):
                 if c == 'c' and i >= 1 and s[i-1] == 'L' :
                     s[i-1] = 'l'
                     s.insert(i,'.')
                 if c == 'c' and i >= 1 and s[i-1] == '`' or s[i-1] == "'" or s[i-1] == '‘' or s[i-1] == ',' :
                     s[i-1] = '.'
-                if c == 'S' and i >= 1 and self.isNumber(s[i-1]) and self.isNumber(s[0]) :
+                if c == 'S' :
                     s[i] = '5'
+                if c == '@' and s[i-1] == "." or s[i-1] == "-":
+                    del s[i-1]
                 if c == 'g' and i >= 1 and self.isNumber(s[i-1]) and self.isNumber(s[0]):
                     s[i] = '9'
                 if c == 'G' and i >= 1 and self.isNumber(s[i-1]) and self.isNumber(s[0]):
                     s[i] = '6'
+                if c == 'Z':
+                    s[i] = '2'
+                if c == 'O':
+                    s[i] = '0'
             i += 1
-        return "".join(s)
+        ss = "".join(s)
+        if self.isEmail(ss):
+            is_valid = validate_email(ss)
+            if is_valid :
+                return ss
+            else :
+                return ""
+        else:
+            return ss
+
+    def checkValid(self, listEmail):
+        for key, val in listEmail.items():
+            is_valid = validate_email(ss)
+            if not is_valid:
+                listEmail[key] = ""
 
     # check the char is vowel or not
     def isVowel(self, c):
         return c == 'a' or c == 'i' or c == 'u' or c == 'e' or c == 'o'
 
     # check the char is number and - or not
-    def isNumber(self, c, search=re.compile(r'[^0-9.-]').search):
+    def isNumber(self, c, search=re.compile(r'[^0-9.+-]').search):
         return not bool(search(c))
+
+
+    # check the char is number and - or not
+    def isEmail(self, c, search=re.compile(r'(^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$)').search):
+        return bool(search(c))
 
     # calculate aspectRatio from dimension x and y
     def aspectRatio(self, xDim, yDim):
