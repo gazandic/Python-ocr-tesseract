@@ -81,6 +81,8 @@ class ImageProcessor(object):
                     s[i] = '2'
                 if c == 'O':
                     s[i] = '0'
+                if c == '|':
+                    s[i] = 'l'
             i += 1
         ss = "".join(s)
         if self.isEmail(ss):
