@@ -33,7 +33,7 @@ class ImageProcessor(object):
     def process_image(self, url):
         image = self._get_image(url)
         image.filter(ImageFilter.SHARPEN)
-        image = self._resize_image(image, 12)
+        image = self._resize_image(image, 13)
         image.filter(ImageFilter.GaussianBlur(2))
         image.filter(ImageFilter.SMOOTH)
         image.filter(ImageFilter.Kernel((3,3), [1,1,1,0,0,0,-1,-1,-1]));
@@ -42,6 +42,7 @@ class ImageProcessor(object):
 
     # get the image
     def _get_image(self, url):
+        print(url)
         if "http" in url:
             return Image.open(BytesIO(requests.get(url).content))
         return Image.open(url)
@@ -55,35 +56,30 @@ class ImageProcessor(object):
 
    # normalize indonesian string for small email picture
     def normalize(self, string):
-        string = string.replace(" ", "")
-        string = string.replace("©", "@")
-        string = string.replace("®", "@")
         s = list(string)
         i = 0
         numbercount = 0
         alphacount = 0
-        for c in s:
-            if not self.isVowel(c):
-                if c == 'c' and i >= 1 and s[i-1] == 'L' :
-                    s[i-1] = 'l'
-                    s.insert(i,'.')
-                if c == 'c' and i >= 1 and s[i-1] == '`' or s[i-1] == "'" or s[i-1] == '‘' or s[i-1] == ',' :
-                    s[i-1] = '.'
-                if c == 'S' :
-                    s[i] = '5'
-                if c == '@' and s[i-1] == "." or s[i-1] == "-":
-                    del s[i-1]
-                if c == 'g' and i >= 1 and self.isNumber(s[i-1]) and self.isNumber(s[0]):
-                    s[i] = '9'
-                if c == 'G' and i >= 1 and self.isNumber(s[i-1]) and self.isNumber(s[0]):
-                    s[i] = '6'
-                if c == 'Z':
-                    s[i] = '2'
-                if c == 'O':
-                    s[i] = '0'
-                if c == '|':
-                    s[i] = 'l'
-            i += 1
+        # for c in s:
+        #     if not self.isVowel(c):
+        #         if c == 'c' and i >= 1 and s[i-1] == 'L' :
+        #             s[i-1] = 'l'
+        #             s.insert(i,'.')
+        #         if c == 'S' :
+        #             s[i] = '5'
+        #         if c == '@' and s[i-1] == "." or s[i-1] == "-":
+        #             del s[i-1]
+        #         if c == 'g' and i >= 1 and self.isNumber(s[i-1]) and self.isNumber(s[0]):
+        #             s[i] = '9'
+        #         if c == 'G' and i >= 1 and self.isNumber(s[i-1]) and self.isNumber(s[0]):
+        #             s[i] = '6'
+        #         if c == 'Z':
+        #             s[i] = '2'
+        #         if c == 'O':
+        #             s[i] = '0'
+        #         if c == '|':
+        #             s[i] = 'l'
+        #     i += 1
         ss = "".join(s)
         if self.isEmail(ss):
             is_valid = validate_email(ss)
